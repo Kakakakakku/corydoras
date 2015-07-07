@@ -1,5 +1,5 @@
-require "corydoras/version"
+require 'corydoras/version'
 
 module Corydoras
-  # Your code goes here...
+  autoload :CLI, 'corydras/cli'
 end

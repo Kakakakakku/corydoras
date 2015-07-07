@@ -1,3 +1,63 @@
 #!/usr/bin/env ruby
 
-require "corydoras"
+require 'corydoras'
+require 'octokit'
+require 'optparse'
+
+# TODO: どうやってブランチ情報を指定する？
+# TODO: どうやって grep and cut する？
+#hoge = `git log --oneline 20150413..master | grep 'Merge pull request' | cut -f 5 -d ' '`
+#hoge = `git log --oneline master..master | grep 'Merge pull request' | cut -f 5 -d ' '`
+branch_diff = `git log --oneline master..master`
+return_code = $?
+if !return_code.success?
+  puts 'ブランチが存在しません'
+  exit
+end
+
+# FIXME: サンプルデータ
+branch_diff = "d03047b Merge pull request #374 from kakakakakku/abc\ndc645e1 Merge pull request #370 from Kakakakakku/abc\n369797e Merge pull request #371 from Kakakakakku/abc\n13a2436 spec.\n45a805a crm filters delete collectly.\n10aadd7 Merge pull request #359 from Kakakakakku/add-release-note-20150622\n6217db7 Update RELEASE-NOTE.md\n"
+
+pr_ids = branch_diff.split("\n").grep(/Merge pull request/).map{|a| a.split[4]}
+
+puts pr_ids
+puts 'デバッグ終了'
+exit
+
+hoge = hoge.split("\n")
+hoge.each do |commit|
+  puts commit
+end
+
+puts '強制終了'
+exit
+
+# 引数とファイルの両方をサポートする
+github_repository = ''
+github_login = ''
+github_password = ''
+
+OptionParser.new do |opt|
+  opt.on('-r [github repository]') { |v| github_repository = v }
+  opt.on('-u [github login]') { |v| github_login = v }
+  opt.on('-p [github password]') { |v| github_password = v }
+  opt.parse!(ARGV)
+end
+
+client = Octokit::Client.new(login: github_login, password: github_password)
+
+puts "hello"
+p client
+
+while line = STDIN.gets
+  if (/#(\d+)/ =~ line)
+    pr = client.pull_request("kakakakakku/#{github_repository}", $1)
+    if pr
+      print sprintf("* [#%s](%s) %s [コミッター:%s]\n", $1, pr[:_links][:html][:href], pr[:title], pr[:user][:login])
+    else
+      print sprintf("* %s\n", $1)
+    end
+  end
+end
+
+Corydoras::CLI.start
